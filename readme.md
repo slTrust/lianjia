@@ -5,11 +5,11 @@
     # 务必执行 
     # 初始化orm
     python manage.py makemigrations
-    # 创建具体的表
+    # 创建具体的表
     python manage.py migrate
     ```
 
-### ershoufangPro 未 scrapy
+### ershoufangPro 为 scrapy
 
 爬取天津的所有二手房 省市区街道房屋详情信息
 
