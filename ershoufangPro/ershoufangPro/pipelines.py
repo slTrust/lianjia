@@ -38,7 +38,7 @@ class AreaPipeline(object):
                                                      %s,%s,%s,%s,%s,
                                                      %s,%s,%s,%s,%s,
                                                      %s,%s,%s,%s,%s,
-                                              %s,%s,%s);''';
+                                                    %s,%s,%s,%s,%s);''';
         self.cursor = self.conn.cursor()
         try:
             self.cursor.execute(sql,(*infoParamList,))
