@@ -117,21 +117,22 @@ class LianjiaSpider(scrapy.Spider):
         totalPrice = response.xpath('/html/body/div[5]/div[2]/div[2]/span[1]/text()')[0].extract()  # 总价格
         squareMetrePrice = response.xpath('/html/body/div[5]/div[2]/div[2]/div[1]/div[1]/span/text()')[0].extract()  # 元/平
         # 简要信息 小区名称， 大概地址
-        district = response.xpath('/html/body/div[5]/div[2]/div[4]/div[1]/a[1]')[0].extract()
-        address = response.xpath('/html/body/div[5]/div[2]/div[4]/div[2]/span[@class="info"]')[0].extract()
-
+        district = response.xpath('/html/body/div[5]/div[2]/div[4]/div[1]/a[1]/text()')[0].extract()
+        address = response.xpath('/html/body/div[5]/div[2]/div[4]/div[2]/span[@class="info"]/a/text()').extract()
+        address = '-'.join(address)
 
         res4['totalPrice'] = covertFloat(totalPrice)
         res4['squareMetrePrice'] = covertFloat(squareMetrePrice)
         res4['district'] = district;
-        res['address'] = address;
+        res4['address'] = address;
+
         print('叶子节点的所有信息对象')
         res4['city'] = item3['city']
         res4['area'] = item3['area']
         res4['street'] = item3['street']
         paramList = mapInfo2Arr(res4);
         print('数据长度为：' + str(len(paramList)))
-        # print(paramList);
+        print(paramList);
 
         item['infoParamList'] = paramList;
         self.countaa = self.countaa + 1;
