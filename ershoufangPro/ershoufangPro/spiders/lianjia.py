@@ -10,7 +10,8 @@ class LianjiaSpider(scrapy.Spider):
     name = 'lianjia'
     # allowed_domains = ['tj.lianjia.com/ershoufang']
     # start_urls = ['https://tj.lianjia.com/ershoufang/']
-
+    countaa = 0;
+    xx = []
     def start_requests(self):  # 由此方法通过下面链接爬取页面
 
         # 定义爬取的链接
@@ -29,68 +30,65 @@ class LianjiaSpider(scrapy.Spider):
             curUrl = baseUrl +area;
             #  所有区的url
             # print('小区的url'+curUrl);
-            item = AreaItem();
-            item['city'] = 'tj';
-            item['area'] = area;
-            yield scrapy.Request(url=curUrl, callback=self.parse2,meta={'item':item})
+            yield scrapy.Request(url=curUrl, callback=self.parse2,meta={'item':{'city':'tj','area':area,'areaUrl':curUrl}})
 
     #  解析街道的url
     def parse2(self, response):
         # 获取参数
         item = response.meta['item']
+        item2 = json.loads(json.dumps(item))
+        print('小区的url'+item2['areaUrl'])
         streetLinks = response.xpath('//div[@data-role="ershoufang"]/div[2]/a/@href');
         baseUrl = 'https://tj.lianjia.com/ershoufang/'
-
-
         for i in streetLinks:
             street = replaceStringErshoufang(i.extract())
-            curUrl = baseUrl + street;
+            curUrl2 = baseUrl + street;
             #  所有街道的url
-            # print('街道的'+curUrl);
-            item['street'] = street;
-            item['baseStreetUrl'] = curUrl
-            yield scrapy.Request(url=curUrl, callback=self.parse3,meta={'item':item})
-        pass
+            print('==>街道的'+curUrl2);
+
+            item2['street'] = street;
+            item2['baseStreetUrl'] = curUrl2
+            yield scrapy.Request(url=curUrl2, callback=self.parse3,meta={'item':json.loads(json.dumps(item2))})
 
     #  解析街道的url 对应的totalPage
     def parse3(self, response):
         item = response.meta['item']
+        item2 = json.loads(json.dumps(item))
+        print('====>area '+ item2['area']+',street : '+ item2['street'] +'streetUrl '+item2['baseStreetUrl'])
         # print('parse3-------------解析 item参数-')
         streetsTotalPage = response.xpath('//*[@class="contentBottom clear"]/div[2]/div[1]/@page-data');
         res = json.loads(streetsTotalPage[0].extract()); # 总页数
         curPage = res['curPage'];
         totalPage = res['totalPage'];
-        # print(res);
         # 生成 该街道所有页码的url
         url = item['baseStreetUrl']
         streetUrlList = convertUrlList(url,totalPage)
         # print('获取所有街道的url pg数组')
-        # print(streetUrlList)
         for i in streetUrlList:
             #  街道的url 第 xx页的url
-            item['streetPgUrl'] = i;
-            yield scrapy.Request(url=i, callback=self.parse4,meta={'item':item})
-        pass
+            item2['streetPgUrl'] = i;
+            yield scrapy.Request(url=i, callback=self.parse4,meta={'item':json.loads(json.dumps(item2))})
 
  #  解析街道的url 对应的每页 30条数据的详情url
     def parse4(self, response):
         item = response.meta['item']
-        # print('第四步解析开始----------'+item['streetPgUrl'])
+        item2 = json.loads(json.dumps(item))
         detailUrls = response.xpath('//div[@class="leftContent"]/ul/li/a[@data-el="ershoufang"]/@href');
         for i in detailUrls:
             detailUrl = i.extract()
             #  所有区的url
-            item['detailUrl'] = detailUrl;
-            # print('每页房屋的url===》 ' + detailUrl);
-            yield scrapy.Request(url=detailUrl, callback=self.parse5,meta={'item':item})
+            item2['detailUrl'] = detailUrl;
+            print('每页房屋的url===》 ' + detailUrl);
+            yield scrapy.Request(url=detailUrl, callback=self.parse5,meta={'item':json.loads(json.dumps(item2))})
 
     #  解析房屋的url 对应的 房屋信息
     def parse5(self, response):
         item = response.meta['item']
+        item3 = json.loads(json.dumps(item))
         print('第5步解析 房屋信息开始----------'+item['detailUrl'])
-        print(item);
         # 获取所有info
         obj = {};
+
         # 房屋基本信息
         dataKey = response.xpath('//*[@id="introduction"]/div/div/div[1]/div[2]/ul/li/span/text()');
         tempKey = []
@@ -118,20 +116,36 @@ class LianjiaSpider(scrapy.Spider):
         # 关注信息
         totalPrice = response.xpath('/html/body/div[5]/div[2]/div[2]/span[1]/text()')[0].extract()  # 总价格
         squareMetrePrice = response.xpath('/html/body/div[5]/div[2]/div[2]/div[1]/div[1]/span/text()')[0].extract()  # 元/平
+        # 简要信息 小区名称， 大概地址
+        district = response.xpath('/html/body/div[5]/div[2]/div[4]/div[1]/a[1]')[0].extract()
+        address = response.xpath('/html/body/div[5]/div[2]/div[4]/div[2]/span[@class="info"]')[0].extract()
+
 
         res4['totalPrice'] = covertFloat(totalPrice)
         res4['squareMetrePrice'] = covertFloat(squareMetrePrice)
+        res4['district'] = district;
+        res['address'] = address;
         print('叶子节点的所有信息对象')
-        res4['city'] = item['city']
-        res4['area'] = item['area']
-        res4['street'] = item['street']
+        res4['city'] = item3['city']
+        res4['area'] = item3['area']
+        res4['street'] = item3['street']
         paramList = mapInfo2Arr(res4);
         print('数据长度为：' + str(len(paramList)))
         # print(paramList);
 
         item['infoParamList'] = paramList;
+        self.countaa = self.countaa + 1;
+        print('分析第'+str(self.countaa)+'条数据')
 
-        return item
+        item2 = AreaItem();
+        item2['city'] = item['city'];
+        item2['area'] = item['area'];
+        item2['street'] = item['street'];
+        item2['baseStreetUrl'] = item['baseStreetUrl'];
+        item2['streetPgUrl'] = item['streetPgUrl'];
+        item2['detailUrl'] = item['detailUrl'];
+        item2['infoParamList'] = item['infoParamList'];
+        return item2
 
 def replaceStringErshoufang(string):
     return string.replace('/ershoufang/','').replace('/','')
@@ -245,7 +259,9 @@ def mapInfo2Arr(oMap):
 
         "totalPrice",
         "squareMetrePrice",
-
+        "district",
+        "address",
+        
         "city",
         "area",
         "street"
