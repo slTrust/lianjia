@@ -34,6 +34,10 @@ class House(models.Model):
 
     total_price = models.DecimalField(max_digits=12, decimal_places=2)
     square_metre_price = models.DecimalField(max_digits=12, decimal_places=2)
+    district = models.CharField(max_length=32)
+    address = models.CharField(max_length=32)
+
+
     city = models.CharField(max_length=32)
     area = models.CharField(max_length=32)
     street = models.CharField(max_length=32)
@@ -72,6 +76,8 @@ obj['spareParts'] = replaceLine(data2[7]);  # 房本备件
 # 关注信息
 obj['totalPrice'] = tree.xpath('/html/body/div[5]/div[2]/div[2]/span[1]/text()')[0] # 总价格
 obj['squareMetrePrice']
+obj['district']
+obj['address']
 
 info['city'] = tempObj['city']
 info['area'] = tempObj['area']
